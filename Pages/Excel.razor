@@ -1,0 +1,9 @@
+﻿@page "/excel"
+@inherits ExcelBase
+<InputFile OnChange="HandleSelection" />
+<h3>@status</h3>
+<h3>Excel</h3>
+@if (status!=null&& status.Length>0)
+{
+    <ExcelTable FileMemoryStream="@ms" />
+}
