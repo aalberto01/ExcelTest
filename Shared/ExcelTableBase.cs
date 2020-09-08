@@ -1,7 +1,8 @@
-﻿using ExcelDataReader;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
+using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ namespace ExcelTest.Shared
 {
     public class ExcelTableBase : ComponentBase
     {
-
+        private int limit = 100;
         public MemoryStream _fileMemoryStream;
 
         [Parameter]
@@ -20,30 +21,35 @@ namespace ExcelTest.Shared
             get { return _fileMemoryStream; }
             set { _fileMemoryStream = value; }
         }
-
+        protected List<object> headers = new List<object>();
+        protected List<List<object>> data = new List<List<object>>();
 
         protected override void OnInitialized()
         {
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            using (var reader = ExcelReaderFactory.CreateCsvReader(FileMemoryStream))
+            using (ExcelPackage package = new ExcelPackage(FileMemoryStream))
             {
-                // Choose one of either 1 or 2:
-
-                // 1. Use the reader methods
-                do
+                ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
+                int rows = worksheet.Dimension.Rows;
+                int columns = worksheet.Dimension.Columns;
+                for (int row = 1; row < limit && row < rows; row++)
                 {
-                    
-                    while (reader.Read())
+                    List<object> rowData = new List<object>();
+                    for (int col = 1; col < columns; col++)
                     {
-                        // reader.GetDouble(0);
+                        var cell = worksheet.Cells[row, col];
+                        if (row == 1)
+                        {
+                            headers.Add(cell.Value);
+                        }
+                        else
+                        {
+                            rowData.Add(cell.Value);
+                        }
                     }
-                } while (reader.NextResult());
-
-                // 2. Use the AsDataSet extension method
-                var result = reader;
-
-                // The result of each spreadsheet is in result.Tables
+                    data.Add(rowData);
+                }
             }
         }
     }
